@@ -489,107 +489,142 @@ function retakePhoto() {
 // ═══════ IDENTIFICATION ═══════
 function identifyBoulder() {
   if(!capturedImage) return;
-  
+
   var results = document.getElementById('matchResults');
-  
-  // Step 1: GPS proximity matching — try close first, then widen
-  var gpsMatches = [];
-  if(userLat !== null) {
-    // Try 100m first
+
+  // Step 1: Check if AI is available
+  if(!settings.apiKey) {
+    results.innerHTML = '<div class="info-box" style="background:#fff3e0;color:#e65100">' +
+      '<strong>No API key set.</strong> Go to the Settings tab and add your Claude API key to enable AI photo identification. ' +
+      'Without AI, only GPS proximity matching is available.</div>';
+    // Fall through to show GPS results anyway
+    var gpsMatches = getGPSMatches();
+    if(gpsMatches.length > 0) {
+      results.innerHTML += '<div class="section-title" style="margin-top:12px">NEAREST BY GPS (no image analysis)</div>';
+      results.innerHTML += renderGPSMatches(gpsMatches.slice(0, 15));
+    }
+    return;
+  }
+
+  if(!navigator.onLine) {
+    results.innerHTML = '<div class="info-box" style="background:#fff3e0;color:#e65100">' +
+      '<strong>You\'re offline.</strong> AI identification needs an internet connection. Showing GPS proximity results only.</div>';
+    var gpsMatches = getGPSMatches();
+    if(gpsMatches.length > 0) {
+      results.innerHTML += renderGPSMatches(gpsMatches.slice(0, 15));
+    } else {
+      results.innerHTML += '<div class="empty"><p>No boulders nearby and no internet for AI identification.</p></div>';
+    }
+    return;
+  }
+
+  // Step 2: GPS proximity for context (not as the final answer)
+  var gpsMatches = getGPSMatches();
+
+  // Step 3: AI identification with photo
+  results.innerHTML = '<div class="info-box"><strong>Analyzing your photo with AI...</strong> This may take 5-10 seconds.</div>';
+
+  var prompt;
+  if(gpsMatches.length > 0) {
+    var nearbyContext = gpsMatches.slice(0, 30).map(function(m) {
+      var p = m.data;
+      return p[2] + ' (' + p[3] + ') - ' + p[4] + ' - ' + Math.round(m.dist) + 'm away - ' + (p[5]||'unknown style');
+    }).join('\n');
+    prompt = 'You are a Fontainebleau bouldering expert. Look carefully at this photo of a boulder. ' +
+      'The user is in the Fontainebleau forest and these problems are nearby by GPS:\n\n' + nearbyContext + '\n\n' +
+      'IMPORTANT: Do NOT just pick the closest boulder. Actually analyze the photo — look at the rock shape, size, angle, texture, ' +
+      'visible holds, chalk marks, circuit colors, cracks, overhangs, and surrounding trees/landscape. ' +
+      'Match what you SEE in the photo to the most likely problem from the list. ' +
+      'If the boulder in the photo does not match any nearby problem well, say so with low confidence.\n' +
+      'Return JSON array of up to 5 matches: [{"name":"...","grade":"...","confidence":"high/medium/low","reasoning":"describe what you see in the photo and why it matches"}]';
+  } else {
+    var featured = P.filter(function(p){ return p[6]; }).slice(0, 50);
+    var areaSet = {};
+    P.forEach(function(p){ areaSet[p[4]] = true; });
+    var areaList = Object.keys(areaSet).sort().join(', ');
+    prompt = 'You are a Fontainebleau bouldering expert. Look carefully at this photo of a boulder. ' +
+      'The user\'s GPS is unavailable so I cannot narrow down by location.\n\n' +
+      'Known areas: ' + areaList + '\n\n' +
+      'Some famous problems: ' + featured.map(function(p){ return p[2] + ' (' + p[3] + ', ' + p[4] + ')'; }).join(', ') + '\n\n' +
+      'Analyze the rock shape, texture, holds, angle, chalk marks, circuit paint, surrounding forest. ' +
+      'If you recognize this specific boulder, identify it. If not, describe what you see and suggest the most likely area and climbing style.\n' +
+      'Return JSON array of up to 5 matches: [{"name":"...","grade":"...","confidence":"high/medium/low","reasoning":"describe what you see in the photo and why it matches"}]';
+  }
+
+  var base64 = capturedImage.split(',')[1];
+
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': settings.apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      messages: [{
+        role: 'user',
+        content: [
+          {type: 'image', source: {type: 'base64', media_type: 'image/jpeg', data: base64}},
+          {type: 'text', text: prompt}
+        ]
+      }]
+    })
+  }).then(function(r) { return r.json(); })
+  .then(function(data) {
+    if(data.error) {
+      results.innerHTML = '<div class="info-box" style="background:#fce4ec;color:#c62828"><strong>AI error:</strong> ' + data.error.message + '</div>';
+      if(gpsMatches.length > 0) {
+        results.innerHTML += '<div class="section-title" style="margin-top:12px">NEAREST BY GPS (fallback)</div>';
+        results.innerHTML += renderGPSMatches(gpsMatches.slice(0, 10));
+      }
+      return;
+    }
+    var text = data.content && data.content[0] ? data.content[0].text : '';
+    try {
+      var jsonMatch = text.match(/\[[\s\S]*\]/);
+      var aiResults = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+      showAIResults(aiResults, gpsMatches);
+    } catch(e) {
+      results.innerHTML = '<div class="info-box" style="background:#fff3e0;color:#e65100">AI responded but results couldn\'t be parsed. Raw response:</div>' +
+        '<div class="match-card"><div class="match-body"><p>' + text.substring(0, 500) + '</p></div></div>';
+      if(gpsMatches.length > 0) {
+        results.innerHTML += '<div class="section-title" style="margin-top:12px">NEAREST BY GPS</div>';
+        results.innerHTML += renderGPSMatches(gpsMatches.slice(0, 10));
+      }
+    }
+  }).catch(function(err) {
+    results.innerHTML = '<div class="info-box" style="background:#fce4ec;color:#c62828"><strong>Request failed:</strong> ' + err.message + '</div>';
+    if(gpsMatches.length > 0) {
+      results.innerHTML += '<div class="section-title" style="margin-top:12px">NEAREST BY GPS (fallback)</div>';
+      results.innerHTML += renderGPSMatches(gpsMatches.slice(0, 10));
+    }
+  });
+}
+
+function getGPSMatches() {
+  var matches = [];
+  if(userLat === null) return matches;
+  // Try 100m first
+  for(var i = 0; i < P.length; i++) {
+    var dist = haversine(userLat, userLon, P[i][0], P[i][1]);
+    if(dist <= 100) {
+      matches.push({idx:i, dist:dist, data:P[i]});
+    }
+  }
+  // If nothing close, expand to 2km
+  if(matches.length === 0) {
     for(var i = 0; i < P.length; i++) {
       var dist = haversine(userLat, userLon, P[i][0], P[i][1]);
-      if(dist <= 100) {
-        gpsMatches.push({idx:i, dist:dist, data:P[i]});
+      if(dist <= 2000) {
+        matches.push({idx:i, dist:dist, data:P[i]});
       }
     }
-    // If nothing close, expand to 500m, then 2km
-    if(gpsMatches.length === 0) {
-      for(var i = 0; i < P.length; i++) {
-        var dist = haversine(userLat, userLon, P[i][0], P[i][1]);
-        if(dist <= 2000) {
-          gpsMatches.push({idx:i, dist:dist, data:P[i]});
-        }
-      }
-    }
-    gpsMatches.sort(function(a,b) { return a.dist - b.dist; });
   }
-
-  // Step 2: If we have API key and are online, use Claude Vision
-  if(settings.apiKey && navigator.onLine) {
-    results.innerHTML = '<div class="info-box">Analyzing photo with AI... This may take a few seconds.</div>';
-
-    var prompt, nearbyContext;
-    if(gpsMatches.length > 0) {
-      nearbyContext = gpsMatches.slice(0, 20).map(function(m) {
-        var p = m.data;
-        return p[2] + ' (' + p[3] + ') - ' + p[4] + ' - ' + Math.round(m.dist) + 'm away - ' + (p[5]||'unknown style');
-      }).join('\n');
-      prompt = 'You are a Fontainebleau bouldering expert. The user has taken a photo of a boulder in the forest of Fontainebleau. ' +
-        'Based on the photo and the following list of nearby problems (sorted by GPS distance), identify which boulder/problem this most likely is.\n\n' +
-        'NEARBY PROBLEMS (by GPS distance):\n' + nearbyContext + '\n\n' +
-        'Analyze the rock features visible in the photo (shape, texture, overhang angle, cracks, holds) and match them to the most likely problems from the list. ' +
-        'Return your answer as JSON array of up to 5 matches: [{"name":"...","grade":"...","confidence":"high/medium/low","reasoning":"1 sentence why"}]';
-    } else {
-      // No GPS or not near any boulders — ask AI to identify from photo alone
-      // Send a sample of famous/featured problems as context
-      var featured = P.filter(function(p){ return p[6]; }).slice(0, 50);
-      var areaSet = {};
-      P.forEach(function(p){ areaSet[p[4]] = true; });
-      var areaList = Object.keys(areaSet).sort().join(', ');
-      prompt = 'You are a Fontainebleau bouldering expert. The user has taken a photo of a boulder but their GPS location is unavailable or they are not currently in the forest. ' +
-        'Try to identify the boulder from its visual features alone.\n\n' +
-        'Known areas in the Fontainebleau forest include: ' + areaList + '\n\n' +
-        'Some well-known problems include: ' + featured.map(function(p){ return p[2] + ' (' + p[3] + ', ' + p[4] + ')'; }).join(', ') + '\n\n' +
-        'Analyze the rock shape, texture, holds, overhang angle, surrounding forest, and any visible chalk marks or circuit paint. ' +
-        'If you recognize the boulder, identify it. If not, describe what you see and suggest the most likely area and style.\n' +
-        'Return your answer as JSON array of up to 5 matches: [{"name":"...","grade":"...","confidence":"high/medium/low","reasoning":"1 sentence why"}]';
-    }
-    
-    var base64 = capturedImage.split(',')[1];
-    
-    fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': settings.apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        messages: [{
-          role: 'user',
-          content: [
-            {type: 'image', source: {type: 'base64', media_type: 'image/jpeg', data: base64}},
-            {type: 'text', text: prompt}
-          ]
-        }]
-      })
-    }).then(function(r) { return r.json(); })
-    .then(function(data) {
-      if(data.error) {
-        showGPSResults(gpsMatches, 'AI error: ' + data.error.message);
-        return;
-      }
-      var text = data.content && data.content[0] ? data.content[0].text : '';
-      try {
-        var jsonMatch = text.match(/\[[\s\S]*\]/);
-        var aiResults = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
-        showAIResults(aiResults, gpsMatches);
-      } catch(e) {
-        showGPSResults(gpsMatches, 'AI responded but could not parse results. Showing GPS matches.');
-      }
-    }).catch(function(err) {
-      showGPSResults(gpsMatches, 'AI request failed (no signal?). Showing GPS matches.');
-    });
-  } else if(gpsMatches.length > 0) {
-    // Offline: GPS-only matching
-    showGPSResults(gpsMatches, null);
-  } else {
-    // No GPS, no API — can't identify
-    results.innerHTML = '<div class="info-box">No GPS signal and no AI key configured. Add your Claude API key in Settings to identify boulders from photos without GPS, or move closer to a climbing area for GPS matching.</div>';
-  }
+  matches.sort(function(a,b) { return a.dist - b.dist; });
+  return matches;
 }
 
 function showAIResults(aiResults, gpsMatches) {
