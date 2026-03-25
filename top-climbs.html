@@ -46,6 +46,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .climb-header { display: grid; grid-template-columns: 1fr 58px 52px 52px; padding: 8px 18px; background: #12121a; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #555; border-bottom: 1px solid #1a1a2e; }
 .footer { text-align: center; padding: 24px; color: #444; font-size: 12px; }
 .hidden { display: none !important; }
+.region-header { padding: 18px 14px 8px; margin-top: 16px; }
+.region-header:first-child { margin-top: 0; }
+.region-name { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #64b5f6; }
+.region-line { height: 1px; background: linear-gradient(90deg, #64b5f6 0%, transparent 60%); margin-top: 6px; }
 @media (max-width: 500px) {
   .header h1 { font-size: 22px; }
   .climb-row { grid-template-columns: 1fr 50px 44px 44px; padding: 8px 12px; }
@@ -83,6 +87,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <option value="4.5">4.5+</option>
   </select>
   <input type="text" id="searchBox" placeholder="Search name or area...">
+  <label style="margin-left:8px">Sort</label>
+  <select id="sortBy">
+    <option value="rating">By Rating</option>
+    <option value="grade">By Grade</option>
+  </select>
 </div>
 
 <div class="container" id="container"></div>
@@ -279,6 +288,22 @@ const DATA = [
 ["Le 9 à la Coq","6a","Troche",3.5,28,"troche","15127"]
 ];
 
+const REGIONS = {
+  "Bas Cuvier": "Cuvier-Ch\u00e2tillon", "Cuvier Nord": "Cuvier-Ch\u00e2tillon", "Cuvier Ouest": "Cuvier-Ch\u00e2tillon",
+  "Merveille": "Cuvier-Ch\u00e2tillon", "Petit Rempart": "Cuvier-Ch\u00e2tillon", "Bellevue": "Cuvier-Ch\u00e2tillon",
+  "Rempart": "Cuvier-Ch\u00e2tillon",
+  "Butte aux Dames": "Apremont",
+  "Cuisini\u00e8re": "Franchard", "Rocher Raymond": "Franchard", "Hautepierre": "Franchard",
+  "\u00c9l\u00e9phant": "Larchant", "Dame Jouanne": "Larchant", "Maunoury": "Larchant",
+  "Grande Montagne": "Trois Pignons Sud", "Rocher Gr\u00e9au": "Nemours",
+  "Canche aux Merciers": "Trois Pignons Est", "Cornebiche": "Trois Pignons Est",
+  "Bois Rond / Auberge": "Trois Pignons Est",
+  "Franchard Envers": "Franchard",
+  "Hercule": "Nord Fontainebleau", "Montussy Est": "Nord Fontainebleau",
+  "Troche": "Yvelines & Essonne Nord",
+};
+const REGION_ORDER = ["Cuvier-Ch\u00e2tillon","Apremont","Franchard","Larchant","Trois Pignons Est","Trois Pignons Sud","Nord Fontainebleau","Nemours","Yvelines & Essonne Nord"];
+
 function gradeNum(g) {
   return parseInt(g[0]);
 }
@@ -296,10 +321,20 @@ function stars(r) {
   return '\u2605'.repeat(full) + (half ? '\u00BD' : '');
 }
 
+function gradeSort(a, b) {
+  const ga = a[1], gb = b[1];
+  const na = parseInt(ga[0]), nb = parseInt(gb[0]);
+  if (na !== nb) return na - nb;
+  const la = ga.slice(1), lb = gb.slice(1);
+  const order = {'a':0,'a+':1,'b':2,'b+':3,'c':4,'c+':5};
+  return (order[la]||0) - (order[lb]||0);
+}
+
 function render() {
   const gradeF = document.getElementById('gradeFilter').value;
   const ratingF = parseFloat(document.getElementById('ratingFilter').value);
   const searchF = document.getElementById('searchBox').value.toLowerCase();
+  const sortBy = document.getElementById('sortBy').value;
 
   const filtered = DATA.filter(d => {
     if (gradeF !== 'all' && gradeNum(d[1]) !== parseInt(gradeF)) return false;
@@ -316,59 +351,116 @@ function render() {
     areas[d[2]].push(d);
   });
 
+  // Sort problems within each area
+  Object.values(areas).forEach(problems => {
+    if (sortBy === 'grade') {
+      problems.sort((a, b) => gradeSort(a, b) || (b[3] - a[3]));
+    } else {
+      problems.sort((a, b) => (b[3] - a[3]) || (b[4] - a[4]));
+    }
+  });
+
+  // Group areas by region
+  const regionAreas = {};
+  areaOrder.forEach(area => {
+    const region = REGIONS[area] || 'Other';
+    if (!regionAreas[region]) regionAreas[region] = [];
+    regionAreas[region].push(area);
+  });
+
   document.getElementById('totalCount').textContent = filtered.length;
   document.getElementById('areaCount').textContent = areaOrder.length;
 
   const container = document.getElementById('container');
   container.innerHTML = '';
 
-  areaOrder.forEach(area => {
-    const problems = areas[area];
-    const avgRating = (problems.reduce((s, p) => s + p[3], 0) / problems.length).toFixed(1);
+  REGION_ORDER.forEach(region => {
+    const regionAreaList = regionAreas[region];
+    if (!regionAreaList || regionAreaList.length === 0) return;
 
-    const section = document.createElement('div');
-    section.className = 'area-section';
+    // Region header
+    const rh = document.createElement('div');
+    rh.className = 'region-header';
+    rh.innerHTML = `<div class="region-name">${region}</div><div class="region-line"></div>`;
+    container.appendChild(rh);
 
-    const header = document.createElement('div');
-    header.className = 'area-header';
-    header.innerHTML = `
-      <span class="area-name">${area}</span>
-      <div class="area-meta">
-        <span class="area-avg">\u2605 ${avgRating}</span>
-        <span class="area-count">${problems.length}</span>
-        <span class="chevron">\u25BC</span>
-      </div>`;
+    regionAreaList.forEach(area => {
+      const problems = areas[area];
+      const avgRating = (problems.reduce((s, p) => s + p[3], 0) / problems.length).toFixed(1);
 
-    const body = document.createElement('div');
-    body.className = 'area-body';
+      const section = document.createElement('div');
+      section.className = 'area-section';
 
-    body.innerHTML = '<div class="climb-header"><span>Problem</span><span style="text-align:center">Grade</span><span style="text-align:center">Rating</span><span style="text-align:center">Votes</span></div>';
+      const header = document.createElement('div');
+      header.className = 'area-header';
+      header.innerHTML = `
+        <span class="area-name">${area}</span>
+        <div class="area-meta">
+          <span class="area-avg">\u2605 ${avgRating}</span>
+          <span class="area-count">${problems.length}</span>
+          <span class="chevron">\u25BC</span>
+        </div>`;
 
-    problems.forEach(p => {
-      const row = document.createElement('div');
-      row.className = 'climb-row';
-      row.innerHTML = `
-        <span class="climb-name"><a href="https://bleau.info/${p[5]}/${p[6]}.html" target="_blank" rel="noopener">${p[0]}</a></span>
-        <span class="climb-grade ${gradeClass(p[1])}">${p[1]}</span>
-        <span class="climb-rating ${ratingClass(p[3])}">${p[3].toFixed(1)}</span>
-        <span class="climb-votes">${p[4]}</span>`;
-      body.appendChild(row);
+      const body = document.createElement('div');
+      body.className = 'area-body';
+
+      body.innerHTML = '<div class="climb-header"><span>Problem</span><span style="text-align:center">Grade</span><span style="text-align:center">Rating</span><span style="text-align:center">Votes</span></div>';
+
+      problems.forEach(p => {
+        const row = document.createElement('div');
+        row.className = 'climb-row';
+        row.innerHTML = `
+          <span class="climb-name"><a href="https://bleau.info/${p[5]}/${p[6]}.html" target="_blank" rel="noopener">${p[0]}</a></span>
+          <span class="climb-grade ${gradeClass(p[1])}">${p[1]}</span>
+          <span class="climb-rating ${ratingClass(p[3])}">${p[3].toFixed(1)}</span>
+          <span class="climb-votes">${p[4]}</span>`;
+        body.appendChild(row);
+      });
+
+      header.addEventListener('click', () => {
+        header.classList.toggle('open');
+        body.classList.toggle('open');
+      });
+
+      section.appendChild(header);
+      section.appendChild(body);
+      container.appendChild(section);
     });
-
-    header.addEventListener('click', () => {
-      header.classList.toggle('open');
-      body.classList.toggle('open');
-    });
-
-    section.appendChild(header);
-    section.appendChild(body);
-    container.appendChild(section);
   });
+
+  // Handle any areas not in a known region
+  if (regionAreas['Other']) {
+    const rh = document.createElement('div');
+    rh.className = 'region-header';
+    rh.innerHTML = `<div class="region-name">Other</div><div class="region-line"></div>`;
+    container.appendChild(rh);
+    regionAreas['Other'].forEach(area => {
+      const problems = areas[area];
+      const avgRating = (problems.reduce((s, p) => s + p[3], 0) / problems.length).toFixed(1);
+      const section = document.createElement('div');
+      section.className = 'area-section';
+      const header = document.createElement('div');
+      header.className = 'area-header';
+      header.innerHTML = `<span class="area-name">${area}</span><div class="area-meta"><span class="area-avg">\u2605 ${avgRating}</span><span class="area-count">${problems.length}</span><span class="chevron">\u25BC</span></div>`;
+      const body = document.createElement('div');
+      body.className = 'area-body';
+      body.innerHTML = '<div class="climb-header"><span>Problem</span><span style="text-align:center">Grade</span><span style="text-align:center">Rating</span><span style="text-align:center">Votes</span></div>';
+      problems.forEach(p => {
+        const row = document.createElement('div');
+        row.className = 'climb-row';
+        row.innerHTML = `<span class="climb-name"><a href="https://bleau.info/${p[5]}/${p[6]}.html" target="_blank" rel="noopener">${p[0]}</a></span><span class="climb-grade ${gradeClass(p[1])}">${p[1]}</span><span class="climb-rating ${ratingClass(p[3])}">${p[3].toFixed(1)}</span><span class="climb-votes">${p[4]}</span>`;
+        body.appendChild(row);
+      });
+      header.addEventListener('click', () => { header.classList.toggle('open'); body.classList.toggle('open'); });
+      section.appendChild(header); section.appendChild(body); container.appendChild(section);
+    });
+  }
 }
 
 document.getElementById('gradeFilter').addEventListener('change', render);
 document.getElementById('ratingFilter').addEventListener('change', render);
 document.getElementById('searchBox').addEventListener('input', render);
+document.getElementById('sortBy').addEventListener('change', render);
 
 render();
 
