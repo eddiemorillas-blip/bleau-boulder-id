@@ -42,7 +42,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .area-avg { font-size: 12px; color: #ffd54f; }
 .area-body { display: none; border: 1px solid #222240; border-top: none; border-radius: 0 0 8px 8px; margin: 0 0 0 0; overflow: hidden; }
 .area-body.open { display: block; }
-.climb-row { display: grid; grid-template-columns: 1fr 58px 52px 52px; gap: 0; padding: 10px 18px; border-bottom: 1px solid #1a1a2e; align-items: center; transition: background 0.1s; }
+.climb-row { display: grid; grid-template-columns: 1fr 58px 52px 52px 28px; gap: 0; padding: 10px 18px; border-bottom: 1px solid #1a1a2e; align-items: center; transition: background 0.1s; }
 .climb-row:hover { background: rgba(100,181,246,0.04); }
 .climb-row:last-child { border-bottom: none; }
 .climb-name { font-size: 14px; color: #e0e0e0; }
@@ -53,12 +53,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .climb-rating { text-align: center; font-size: 14px; font-weight: 600; }
 .r-high { color: #ffd54f; } .r-med { color: #bbb; }
 .climb-votes { text-align: center; font-size: 12px; color: #666; }
-.climb-header { display: grid; grid-template-columns: 1fr 58px 52px 52px; padding: 8px 18px; background: #12121a; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #555; border-bottom: 1px solid #1a1a2e; }
+.climb-gps { text-align: center; font-size: 14px; }
+.climb-gps a { color: #555; text-decoration: none; transition: color 0.15s; }
+.climb-gps a:hover { color: #64b5f6; }
+.climb-header { display: grid; grid-template-columns: 1fr 58px 52px 52px 28px; padding: 8px 18px; background: #12121a; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #555; border-bottom: 1px solid #1a1a2e; }
 .footer { text-align: center; padding: 24px; color: #444; font-size: 12px; }
 .hidden { display: none !important; }
 @media (max-width: 500px) {
   .header h1 { font-size: 22px; }
-  .climb-row { grid-template-columns: 1fr 50px 44px 44px; padding: 8px 12px; }
+  .climb-row { grid-template-columns: 1fr 50px 44px 44px 24px; padding: 8px 12px; }
   .area-header { padding: 12px 14px; }
   .climb-header { padding: 6px 12px; }
 }
@@ -294,6 +297,8 @@ const DATA = [
 ["Le 9 à la Coq","6a","Troche",3.5,28,"troche","15127"]
 ];
 
+const GPS = {"302447":[48.44742,2.643805],"301626":[48.447669,2.64333],"301624":[48.447671,2.643331],"20958":[48.388511,2.569116],"20956":[48.388495,2.569038],"20955":[48.388518,2.569062],"20952":[48.388465,2.568102],"24028":[48.388754,2.564405],"20980":[48.386536,2.568386],"304472":[48.388749,2.564368],"20961":[48.388521,2.569104],"20957":[48.388498,2.56902],"304706":[48.388747,2.56436],"24027":[48.388756,2.564403],"20954":[48.388756,2.564433],"309664":[48.388205,2.568941],"309617":[48.388208,2.568937],"23000":[48.438631,2.62177],"23038":[48.437988,2.621922],"23045":[48.439622,2.622898],"23012":[48.438105,2.621139],"291":[48.444288,2.652416],"296":[48.444287,2.652421],"3152":[48.409168,2.595871],"15023":[48.500576,2.47258],"9771":[48.461379,2.660102],"294":[48.444321,2.652299],"15020":[48.499954,2.472941],"14226":[48.379551,2.668835],"14257":[48.379608,2.669929],"14232":[48.379993,2.66867],"14229":[48.379946,2.668649],"14288":[48.390308,2.562865],"301416":[48.408033,2.595654],"1653":[48.410008,2.611545],"22711":[48.409765,2.611422],"14794":[48.41004,2.611817],"15425":[48.41015,2.611551],"1670":[48.409781,2.60992],"496":[48.410609,2.613882],"23610":[48.410148,2.611556],"3204":[48.410036,2.611363],"23869":[48.409892,2.611111],"1608":[48.409787,2.611965],"3173":[48.40997,2.611603],"9947":[48.409882,2.611418],"9692":[48.410535,2.612248],"264":[48.447691,2.638037],"248":[48.446926,2.63946],"1496":[48.446989,2.638778],"2005":[48.446893,2.639474],"1998":[48.446992,2.638763],"239":[48.447338,2.636958],"260":[48.447265,2.640456],"36":[48.437301,2.62681],"1064":[48.447411,2.642283],"32":[48.436487,2.629407],"1099":[48.446797,2.638861],"266":[48.448407,2.637044],"1497":[48.447593,2.63755],"1956":[48.447402,2.637914],"1544":[48.409773,2.599726],"1961":[48.447306,2.63883],"978":[48.447696,2.638057],"1612":[48.447639,2.637563],"227":[48.446949,2.637696],"245":[48.447606,2.637561],"186":[48.447712,2.638023],"8611":[48.446955,2.63878],"273":[48.447688,2.63804],"270":[48.446831,2.638436],"202":[48.447116,2.639092],"2008":[48.447743,2.638534],"1957":[48.447419,2.637922],"1992":[48.446709,2.637794],"2009":[48.447104,2.638997],"14321":[48.447189,2.638881],"4116":[48.447154,2.638364],"6818":[48.446831,2.638122],"12066":[48.447063,2.638961],"8342":[48.446807,2.638793],"1995":[48.447286,2.638036],"1537":[48.447742,2.63852],"300162":[48.44671,2.637791],"1980":[48.446778,2.639618],"1427":[48.447689,2.63805],"305600":[48.44752,2.638137],"188":[48.447491,2.637982],"1145":[48.447065,2.638981],"195":[48.447195,2.638889],"11342":[48.446748,2.63874],"19436":[48.447077,2.639009],"8383":[48.447277,2.638821],"20168":[48.447465,2.641162],"300338":[48.448045,2.641255],"1119":[48.410089,2.599462],"11455":[48.435803,2.631316],"20117":[48.449031,2.63425],"1505":[48.438477,2.633317],"6817":[48.501174,2.470768],"1581":[48.461541,2.659081],"1580":[48.461542,2.659077],"1614":[48.447728,2.638121],"409":[48.375065,2.513927],"1609":[48.410309,2.611628],"1597":[48.392397,2.559112],"8888":[48.293885,2.594126],"413":[48.293487,2.593675],"79":[48.438549,2.63342],"301522":[48.439677,2.630011],"24176":[48.438492,2.631415],"23863":[48.439529,2.631063],"24189":[48.438543,2.631727],"9895":[48.439302,2.634356],"301176":[48.439665,2.629999],"22939":[48.438872,2.6336],"22403":[48.438505,2.633333],"301521":[48.439674,2.630008],"1026":[48.438327,2.633539],"24070":[48.43912,2.63025],"20344":[48.370066,2.537802],"11451":[48.369376,2.535243],"17301":[48.369294,2.535947],"11452":[48.369295,2.53595],"1525":[48.262553,2.685044],"17612":[48.262514,2.68532],"24571":[48.406792,2.430658],"303141":[48.421899,2.702817],"21462":[48.303271,2.602413],"389":[48.30285,2.602648],"22988":[48.438344,2.621171],"12032":[48.398996,2.519239],"428":[48.293855,2.593243],"11428":[48.409637,2.611657],"15505":[48.500289,2.47533],"1308":[48.711188,2.1943],"302001":[48.447484,2.638334],"14363":[48.444168,2.652471],"305524":[48.445636,2.652879],"1449":[48.40552,2.627723],"1618":[48.445433,2.646455],"15127":[48.711208,2.194497]};
+
 const REGIONS = {
   "Bas Cuvier": "Cuvier-Ch\u00e2tillon", "Cuvier Nord": "Cuvier-Ch\u00e2tillon", "Cuvier Ouest": "Cuvier-Ch\u00e2tillon",
   "Merveille": "Cuvier-Ch\u00e2tillon", "Petit Rempart": "Cuvier-Ch\u00e2tillon", "Bellevue": "Cuvier-Ch\u00e2tillon",
@@ -426,16 +431,19 @@ function render() {
       const body = document.createElement('div');
       body.className = 'area-body';
 
-      body.innerHTML = '<div class="climb-header"><span>Problem</span><span style="text-align:center">Grade</span><span style="text-align:center">Rating</span><span style="text-align:center">Votes</span></div>';
+      body.innerHTML = '<div class="climb-header"><span>Problem</span><span style="text-align:center">Grade</span><span style="text-align:center">Rating</span><span style="text-align:center">Votes</span><span></span></div>';
 
       problems.forEach(p => {
         const row = document.createElement('div');
         row.className = 'climb-row';
+        const gps = GPS[p[6]];
+        const pin = gps ? `<a href="https://www.google.com/maps?q=${gps[0]},${gps[1]}" target="_blank" rel="noopener" title="${gps[0]}, ${gps[1]}">&#x1F4CD;</a>` : '';
         row.innerHTML = `
           <span class="climb-name"><a href="https://bleau.info/${p[5]}/${p[6]}.html" target="_blank" rel="noopener">${p[0]}</a></span>
           <span class="climb-grade ${gradeClass(p[1])}">${p[1]}</span>
           <span class="climb-rating ${ratingClass(p[3])}">${p[3].toFixed(1)}</span>
-          <span class="climb-votes">${p[4]}</span>`;
+          <span class="climb-votes">${p[4]}</span>
+          <span class="climb-gps">${pin}</span>`;
         body.appendChild(row);
       });
 
