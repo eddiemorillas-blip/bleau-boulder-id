@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Font Top Rated Climbs</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f13; color: #e0e0e0; min-height: 100vh; }
+.header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 32px 20px 24px; text-align: center; border-bottom: 2px solid #2a2a4a; }
+.header h1 { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+.header h1 span { color: #64b5f6; }
+.header p { color: #8888aa; font-size: 14px; margin-top: 8px; }
+.stats { display: flex; justify-content: center; gap: 24px; margin-top: 16px; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,0.05); border-radius: 8px; padding: 8px 16px; }
+.stat-num { font-size: 22px; font-weight: 700; color: #64b5f6; }
+.stat-label { font-size: 11px; color: #8888aa; text-transform: uppercase; letter-spacing: 1px; }
+.filters { padding: 16px 20px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; max-width: 800px; margin: 0 auto; }
+.filters label { font-size: 12px; color: #8888aa; text-transform: uppercase; letter-spacing: 1px; margin-right: 4px; }
+.filters select, .filters input { background: #1a1a2e; border: 1px solid #2a2a4a; color: #e0e0e0; padding: 6px 10px; border-radius: 6px; font-size: 14px; }
+.filters input { width: 180px; }
+.container { max-width: 800px; margin: 0 auto; padding: 0 12px 40px; }
+.area-section { margin-bottom: 4px; }
+.area-header { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 10px; padding: 14px 18px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.15s; user-select: none; }
+.area-header:hover { background: #1e1e36; border-color: #3a3a5a; }
+.area-header.open { border-radius: 10px 10px 0 0; border-bottom-color: transparent; background: #1e1e36; }
+.area-name { font-size: 17px; font-weight: 600; color: #fff; }
+.area-meta { display: flex; align-items: center; gap: 12px; }
+.area-count { background: #2a2a4a; color: #64b5f6; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 12px; }
+.area-avg { font-size: 13px; color: #ffd54f; }
+.chevron { color: #555; font-size: 18px; transition: transform 0.2s; }
+.area-header.open .chevron { transform: rotate(180deg); }
+.area-body { display: none; border: 1px solid #2a2a4a; border-top: none; border-radius: 0 0 10px 10px; overflow: hidden; }
+.area-body.open { display: block; }
+.climb-row { display: grid; grid-template-columns: 1fr 58px 52px 52px; gap: 0; padding: 10px 18px; border-bottom: 1px solid #1a1a2e; align-items: center; transition: background 0.1s; }
+.climb-row:hover { background: rgba(100,181,246,0.04); }
+.climb-row:last-child { border-bottom: none; }
+.climb-name { font-size: 14px; color: #e0e0e0; }
+.climb-name a { color: #e0e0e0; text-decoration: none; }
+.climb-name a:hover { color: #64b5f6; }
+.climb-grade { font-size: 13px; font-weight: 600; text-align: center; padding: 2px 0; border-radius: 4px; }
+.g5 { color: #81c784; } .g6 { color: #64b5f6; } .g7 { color: #e57373; } .g8 { color: #ce93d8; }
+.climb-rating { text-align: center; font-size: 14px; font-weight: 600; }
+.r-high { color: #ffd54f; } .r-med { color: #bbb; }
+.climb-votes { text-align: center; font-size: 12px; color: #666; }
+.climb-header { display: grid; grid-template-columns: 1fr 58px 52px 52px; padding: 8px 18px; background: #12121a; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #555; border-bottom: 1px solid #1a1a2e; }
+.footer { text-align: center; padding: 24px; color: #444; font-size: 12px; }
+.hidden { display: none !important; }
+@media (max-width: 500px) {
+  .header h1 { font-size: 22px; }
+  .climb-row { grid-template-columns: 1fr 50px 44px 44px; padding: 8px 12px; }
+  .area-header { padding: 12px 14px; }
+  .climb-header { padding: 6px 12px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Font <span>Top Climbs</span></h1>
+  <p>Fontainebleau's highest-rated boulders &mdash; 5a to 8a</p>
+  <div class="stats">
+    <div class="stat"><div class="stat-num" id="totalCount">187</div><div class="stat-label">Problems</div></div>
+    <div class="stat"><div class="stat-num" id="areaCount">23</div><div class="stat-label">Areas</div></div>
+    <div class="stat"><div class="stat-num">3.5+</div><div class="stat-label">Min Rating</div></div>
+    <div class="stat"><div class="stat-num">20+</div><div class="stat-label">Min Votes</div></div>
+  </div>
+</div>
+
+<div class="filters">
+  <label>Grade</label>
+  <select id="gradeFilter">
+    <option value="all">All</option>
+    <option value="5">5a–5c+</option>
+    <option value="6">6a–6c+</option>
+    <option value="7">7a–7c+</option>
+    <option value="8">8a</option>
+  </select>
+  <label style="margin-left:8px">Min Rating</label>
+  <select id="ratingFilter">
+    <option value="3.5">3.5+</option>
+    <option value="4.0">4.0+</option>
+    <option value="4.5">4.5+</option>
+  </select>
+  <input type="text" id="searchBox" placeholder="Search name or area...">
+</div>
+
+<div class="container" id="container"></div>
+<div class="footer">Data from bleau.info &middot; March 2026 &middot; Ratings based on community votes</div>
+
+<script>
+const DATA = [
+["Liakychan","7c","Bellevue",3.8,61,"bellevue","302447"],
+["Isatix","7a","Bellevue",3.8,90,"bellevue","301626"],
+["Isatix (droite)","7a","Bellevue",3.5,98,"bellevue","301624"],
+["Le Grand Requin Blanc","7b","Bois Rond / Auberge",4.1,76,"boisrondauberge","20958"],
+["Les Dents de la Belle-Mer","7a","Bois Rond / Auberge",3.9,181,"boisrondauberge","20956"],
+["Les Dents de la Mer","6c","Bois Rond / Auberge",3.9,97,"boisrondauberge","20955"],
+["Avatar","7b","Bois Rond / Auberge",3.7,30,"boisrondauberge","20952"],
+["DJ Ridoo Joue du Didgeridoo","7b","Bois Rond / Auberge",3.7,127,"boisrondauberge","24028"],
+["Incassable (assis)","7a","Bois Rond / Auberge",3.7,24,"boisrondauberge","20980"],
+["Didgeridoo (en traversée)","6b","Bois Rond / Auberge",3.7,83,"boisrondauberge","304472"],
+["Le Requin Marteau","6a","Bois Rond / Auberge",3.7,41,"boisrondauberge","20961"],
+["Les Dents de la Belle-Mer (gauche)","7b","Bois Rond / Auberge",3.6,27,"boisrondauberge","20957"],
+["Dernier Rempart","6c","Bois Rond / Auberge",3.6,46,"boisrondauberge","304706"],
+["DJ Ridoo","6b","Bois Rond / Auberge",3.6,68,"boisrondauberge","24027"],
+["Didgeridoo (assis)","7a","Bois Rond / Auberge",3.5,141,"boisrondauberge","20954"],
+["Le Coucher du Soleil","6c","Bois Rond / Auberge",3.5,30,"boisrondauberge","309664"],
+["Sunset Roof","6c","Bois Rond / Auberge",3.5,72,"boisrondauberge","309617"],
+["La Finesse","6a","Butte aux Dames",3.9,23,"butteauxdames","23000"],
+["Game One","7b","Butte aux Dames",3.7,65,"butteauxdames","23038"],
+["Le Pilier de sa Dame","6c","Butte aux Dames",3.6,78,"butteauxdames","23045"],
+["Les Ailes du Plaisir (retour)","5c","Butte aux Dames",3.6,35,"butteauxdames","23012"],
+["L'Échevin","7a","Canche aux Merciers",4.5,240,"canche","291"],
+["Le Surplomb du Nez","6a","Canche aux Merciers",4.1,137,"canche","9735"],
+["L'Hélicoptère","6b","Canche aux Merciers",4.1,283,"canche","296"],
+["Pif","6c","Canche aux Merciers",3.8,197,"canche","3152"],
+["L'Échevin (assis)","7b","Canche aux Merciers",3.8,143,"canche","15023"],
+["Le Toit du Nez","6c","Canche aux Merciers",3.8,168,"canche","9737"],
+["La Dalle Allongée","6a","Canche aux Merciers",3.8,62,"canche","9771"],
+["La Dalle de la Cascade","5c","Canche aux Merciers",3.7,37,"canche","294"],
+["L'Échevin (assis départ bas)","8a","Canche aux Merciers",3.7,84,"canche","15020"],
+["La Fête à Pépé","6c","Canche aux Merciers",3.7,44,"canche","306091"],
+["Hélitreuillée","7b","Canche aux Merciers",3.5,116,"canche","14780"],
+["L'Arête Nord","5c","Canche aux Merciers",3.5,38,"canche","9736"],
+["La Dalle Allongée (en dévers)","6a","Canche aux Merciers",3.5,22,"canche","7261"],
+["Mur Béton","6c","Canche aux Merciers",3.5,20,"canche","312429"],
+["Le Sentier de la Guerre","6c","Cornebiche",4.3,106,"cornebiche","301490"],
+["La Fissure de la Vengeance","6a","Cornebiche",4.1,35,"cornebiche","14226"],
+["Le Sapin","6b","Cornebiche",3.9,29,"cornebiche","14257"],
+["La Rampe","6c","Cornebiche",3.8,57,"cornebiche","301540"],
+["L'Éternuement du Chef","6a","Cornebiche",3.7,56,"cornebiche","14232"],
+["La Plume Indienne","7a","Cornebiche",3.7,97,"cornebiche","301481"],
+["Le Grand Chef","5c","Cornebiche",3.6,21,"cornebiche","14229"],
+["Moccassin","6c","Cornebiche",3.5,27,"cornebiche","301531"],
+["Le Calumet de la Paix (direct)","6b","Cornebiche",3.5,47,"cornebiche","14288"],
+["Hiawatha","6c","Cornebiche",3.5,26,"cornebiche","301416"],
+["La Pierre et le Sabre / La Belle Arête","6c","Cuisinière",4.2,110,"cuisiniere","1653"],
+["La Superbe (assis)","6b","Cuisinière",4.2,28,"cuisiniere","22711"],
+["Dune de Sable","6b","Cuisinière",4.1,38,"cuisiniere","14794"],
+["La Divine (assis)","6b","Cuisinière",4.0,32,"cuisiniere","15425"],
+["Tranche de Lard","6b","Cuisinière",4.0,238,"cuisiniere","1670"],
+["Échine","7b","Cuisinière",3.8,49,"cuisiniere","496"],
+["La Divine","6a","Cuisinière",3.8,35,"cuisiniere","23610"],
+["La Peau Lisse","6a","Cuisinière",3.8,28,"cuisiniere","3204"],
+["Pas Glop!","6a","Cuisinière",3.8,29,"cuisiniere","23869"],
+["Le Mouton à 6 Pattes","7a","Cuisinière",3.7,278,"cuisiniere","1608"],
+["La Nitroglycérine","6b","Cuisinière",3.7,41,"cuisiniere","3173"],
+["Comète","6b","Cuisinière",3.7,62,"cuisiniere","9947"],
+["Merci les Gags","6b","Cuisinière",3.5,21,"cuisiniere","9692"],
+["L'Abbé Résina / La Bérézina","7c","Bas Cuvier",4.5,387,"cuvier","264"],
+["La Super Prestat","7b","Bas Cuvier",4.5,179,"cuvier","248"],
+["L'Anglophile","7b","Bas Cuvier",4.5,85,"cuvier","1496"],
+["La Stalingrad","6b","Bas Cuvier",4.5,54,"cuvier","2005"],
+["La Forge","6c","Bas Cuvier",4.3,144,"cuvier","1998"],
+["Bérézina-Carnage (assis)","8a","Bas Cuvier",4.2,197,"cuvier","291"],
+["Big Boss (assis)","8a","Bas Cuvier",4.2,77,"cuvier","1121"],
+["Le Samouraï","7a","Bas Cuvier",4.2,297,"cuvier","239"],
+["L'Abattoir (prolongée)","7c","Bas Cuvier",4.1,244,"cuvier","260"],
+["La Marie-Rose","6a","Bas Cuvier",4.1,1014,"cuvier","36"],
+["Opium","7a","Bas Cuvier",4.0,236,"cuvier","1064"],
+["L'Angle Allain","5c","Bas Cuvier",4.0,87,"cuvier","32"],
+["Le Bouchon","6c","Bas Cuvier",4.0,138,"cuvier","1099"],
+["Le Monocle","7a","Bas Cuvier",3.9,100,"cuvier","266"],
+["L'Étrave (assis)","7c","Bas Cuvier",3.9,46,"cuvier","1497"],
+["Les Dégénérés","6c","Bas Cuvier",3.9,39,"cuvier","310080"],
+["L'Arête de la Dame Jouanne","5b","Bas Cuvier",3.9,68,"cuvier","1956"],
+["Le Carré d'As (assis)","7a","Bas Cuvier",3.8,67,"cuvier","1544"],
+["L'Arête de Body","6c","Bas Cuvier",3.8,74,"cuvier","296"],
+["Pilier du Jeu de Paume","6b","Bas Cuvier",3.8,35,"cuvier","1961"],
+["L'Amende Honorable","7c","Bas Cuvier",3.8,109,"cuvier","978"],
+["Le Biceps Mou (assis)","7c","Bas Cuvier",3.8,41,"cuvier","1612"],
+["Aérosol","7b","Bas Cuvier",3.8,173,"cuvier","227"],
+["Pince-Mi, Pince-Moi","7b","Bas Cuvier",3.8,164,"cuvier","245"],
+["L'Abattoir","7a","Bas Cuvier",3.8,323,"cuvier","186"],
+["La Conque à Doigt","7a","Bas Cuvier",3.8,425,"cuvier","1099"],
+["La Rhume Folle (gauche)","6c","Bas Cuvier",3.8,130,"cuvier","8611"],
+["Apothéose","7c","Bas Cuvier",3.7,68,"cuvier","273"],
+["Plats Toniques","7c","Bas Cuvier",3.7,30,"cuvier","270"],
+["La Joker","7a","Bas Cuvier",3.7,601,"cuvier","202"],
+["Les Jumeaux de Gauche / Béatrice","6c","Bas Cuvier",3.7,25,"cuvier","2008"],
+["La Vire Authenac","6a","Bas Cuvier",3.7,49,"cuvier","1957"],
+["La Lili","6c","Bas Cuvier",3.6,155,"cuvier","1992"],
+["La Marco","6c","Bas Cuvier",3.6,30,"cuvier","2009"],
+["Les Bretelles (assis)","6c","Bas Cuvier",3.6,85,"cuvier","14321"],
+["Scampi Fritti","6c","Bas Cuvier",3.6,28,"cuvier","4116"],
+["Hier Encore","6b","Bas Cuvier",3.6,238,"cuvier","6818"],
+["Pause Café","6b","Bas Cuvier",3.6,30,"cuvier","12066"],
+["Doctor Jones","6b","Bas Cuvier",3.6,103,"cuvier","8342"],
+["La Ravensbrück","6b","Bas Cuvier",3.6,56,"cuvier","1995"],
+["Les Jumeaux de Droite / Sanguine","6b","Bas Cuvier",3.6,43,"cuvier","1537"],
+["La Lili (sans convention)","6a","Bas Cuvier",3.6,36,"cuvier","300162"],
+["La Dalle du Baquet","6a","Bas Cuvier",3.6,37,"cuvier","1980"],
+["Apothéose (assis)","8a","Bas Cuvier",3.5,26,"cuvier","1427"],
+["Bizarre","7a","Bas Cuvier",3.5,33,"cuvier","305600"],
+["L'Araignée","7a","Bas Cuvier",3.5,178,"cuvier","188"],
+["La Chicorée","7a","Bas Cuvier",3.5,161,"cuvier","1145"],
+["La Cinzano","7a","Bas Cuvier",3.5,53,"cuvier","195"],
+["La Moussette","6c","Bas Cuvier",3.5,20,"cuvier","11342"],
+["La Ricoré","6c","Bas Cuvier",3.5,28,"cuvier","19436"],
+["Paris by Night","6c","Bas Cuvier",3.5,24,"cuvier","8383"],
+["Art and Nature","7c","Cuvier Nord",4.3,20,"cuvier.nord","20168"],
+["Phoenix (intégral)","7c","Cuvier Nord",3.8,40,"cuvier.nord","300338"],
+["Makhno (droite)","7b","Cuvier Nord",3.8,35,"cuvier.nord","16424"],
+["La Haute (direct)","6a","Cuvier Nord",3.8,25,"cuvier.nord","20149"],
+["Les Deux Fissures","5c","Cuvier Nord",3.8,36,"cuvier.nord","20126"],
+["Carnivore","7a","Cuvier Nord",3.7,99,"cuvier.nord","1119"],
+["La Grand-Mère (intégrale)","6c","Cuvier Nord",3.7,23,"cuvier.nord","20158"],
+["Red October","7b","Cuvier Nord",3.6,61,"cuvier.nord","11455"],
+["Le Mur (direct)","7a","Cuvier Nord",3.5,39,"cuvier.nord","20117"],
+["Le Diamant Noir","6b","Cuvier Nord",3.5,34,"cuvier.nord","310090"],
+["Le Mur de Berlin","7c","Cuvier Ouest",4.2,134,"cuvierouest","1505"],
+["L'Imitateur","7a","Cuvier Ouest",3.9,104,"cuvierouest","301510"],
+["L'Aile de Chauve-Souris","6c","Cuvier Ouest",3.8,57,"cuvierouest","6817"],
+["Coup de l'Étrier","6c","Cuvier Ouest",3.7,21,"cuvierouest","7127"],
+["Le Contorsionniste / Pigeon vole","7a","Cuvier Ouest",3.7,95,"cuvierouest","301516"],
+["Le Croque-Mort","7a","Cuvier Ouest",3.6,93,"cuvierouest","305498"],
+["Mécanique de la Solitude","7c","Cuvier Ouest",3.5,41,"cuvierouest","1499"],
+["La Lune de Miel","7a","Cuvier Ouest",3.5,30,"cuvierouest","305464"],
+["La Dalle de l'Éléphant","6c","Éléphant",4.4,424,"elephant","1581"],
+["Fissure en Dalle de l'Éléphant","5c","Éléphant",4.2,117,"elephant","1580"],
+["Saut du Coq","6c","Éléphant",4.0,37,"elephant","309674"],
+["Le Toit du Gardien","6c","Éléphant",4.0,135,"elephant","1614"],
+["Le Toit de la Petite Pointe","6c","Éléphant",3.9,229,"elephant","432"],
+["Haute Fidélité","6c","Éléphant",3.9,158,"elephant","409"],
+["L'Épervier (assis)","7a","Éléphant",3.9,202,"elephant","1609"],
+["Big Dyno (assis)","7b","Éléphant",3.8,178,"elephant","311052"],
+["Le Chamois","6b","Éléphant",3.8,128,"elephant","6819"],
+["Saut du Coq (assis)","7a","Éléphant",3.7,74,"elephant","309674"],
+["Haute Fidélité (assis)","7a","Éléphant",3.7,252,"elephant","1597"],
+["La Barre Fixe (assis)","7b","Éléphant",3.6,300,"elephant","8888"],
+["Le Lépreux (direct)","6c","Éléphant",3.6,452,"elephant","413"],
+["L'Apparemment","8a","Franchard Envers",4.6,97,"envers","79"],
+["Une Vie à Grimper","7b","Franchard Envers",4.1,32,"envers","301522"],
+["Zeus","7c","Franchard Envers",4.0,30,"envers","24176"],
+["Apnéiste","7b","Franchard Envers",4.0,98,"envers","23863"],
+["Hadès","7c","Franchard Envers",3.9,76,"envers","24189"],
+["Welcome to Tijuana","7c","Franchard Envers",3.9,370,"envers","9895"],
+["Le Point G","7b","Franchard Envers",3.9,29,"envers","301176"],
+["Masta Boulda (en traversée)","7b","Franchard Envers",3.9,20,"envers","22939"],
+["Tactic","7c","Franchard Envers",3.7,38,"envers","22403"],
+["À la Recherche du Point G","7b","Franchard Envers",3.7,59,"envers","301521"],
+["L'Illusionniste","7a","Franchard Envers",3.7,28,"envers","1026"],
+["Compresse Nez (droite)","7b","Franchard Envers",3.6,107,"envers","24070"],
+["Lost in Space","7a","Grande Montagne",4.2,125,"grandemontagne","20344"],
+["Elle-et-Vire","7b","Grande Montagne",4.0,44,"grandemontagne","11451"],
+["Pro-Fusion (assis)","7b","Grande Montagne",3.7,37,"grandemontagne","17301"],
+["Tokamak","7a","Grande Montagne",3.7,79,"grandemontagne","11452"],
+["Tigre et Dragon (version obsolète)","8a","Rocher Gréau",4.9,63,"greau","1525"],
+["Les Cons qui s'Adorent","6c","Rocher Gréau",3.6,52,"greau","17612"],
+["Banco","7a","Hautepierre",3.9,38,"hautepierre","24571"],
+["Trop Beau pour Toit (prolongé)","7b","Hercule",3.5,68,"hercule","303141"],
+["La Tour de Babel (assis)","7c","Dame Jouanne",4.7,20,"jouanne","21462"],
+["Le Plafond","7b","Dame Jouanne",4.0,179,"jouanne","389"],
+["Irrévérence","7c","Dame Jouanne",3.7,82,"jouanne","10016"],
+["Nuage","7a","Dame Jouanne",3.7,38,"jouanne","22988"],
+["Nuage (droite)","7b","Dame Jouanne",3.6,32,"jouanne","12032"],
+["La Dalle au Micro-Ondes","7c","Maunoury",4.5,165,"maunoury","428"],
+["Duel","7b","Maunoury",4.3,138,"maunoury","1314"],
+["Pendule","6c","Maunoury",4.2,154,"maunoury","1221"],
+["Marabout des Ficelles","6c","Maunoury",3.9,65,"maunoury","11390"],
+["La Dalle de l'Esprit du Vent","7a","Maunoury",3.8,33,"maunoury","11428"],
+["Tsunami","7c","Maunoury",3.7,78,"maunoury","1378"],
+["L'Allongée (droite)","6a","Maunoury",3.7,101,"maunoury","1215"],
+["Vigneron (assis)","7c","Maunoury",3.6,43,"maunoury","15505"],
+["Duel (assis)","8a","Maunoury",3.6,72,"maunoury","1308"],
+["Maléfice (assis)","7a","Maunoury",3.5,22,"maunoury","20320"],
+["La Bouchardière","5c","Maunoury",3.5,29,"maunoury","302001"],
+["Le Jeune Werther","7b","Merveille",4.5,111,"merveille","1453"],
+["La Queue de Lézard","7a","Merveille",4.0,74,"merveille","305522"],
+["Brise Fer (assis)","7b","Merveille",3.8,50,"merveille","302002"],
+["La Dalle de l'Avenir","6c","Merveille",3.8,61,"merveille","305522"],
+["1900","6b","Merveille",3.7,28,"merveille","14363"],
+["La Belette","7b","Montussy Est",3.6,26,"montussyest","302776"],
+["La Fouine","7a","Montussy Est",3.6,20,"montussyest","302773"],
+["Logarithme","7a","Petit Rempart",3.6,29,"petitrempart","305524"],
+["Épiphyse","7b","Rocher Raymond",3.8,61,"raymond","1449"],
+["Atrésie (assis)","8a","Rempart",3.9,32,"rempart","1618"],
+["Le 9 à la Coq","6a","Troche",3.5,28,"troche","15127"]
+];
+
+function gradeNum(g) {
+  return parseInt(g[0]);
+}
+function gradeClass(g) {
+  const n = gradeNum(g);
+  if (n <= 5) return 'g5';
+  if (n <= 6) return 'g6';
+  if (n <= 7) return 'g7';
+  return 'g8';
+}
+function ratingClass(r) { return r >= 4.0 ? 'r-high' : 'r-med'; }
+function stars(r) {
+  const full = Math.floor(r);
+  const half = r - full >= 0.3 ? 1 : 0;
+  return '\u2605'.repeat(full) + (half ? '\u00BD' : '');
+}
+
+function render() {
+  const gradeF = document.getElementById('gradeFilter').value;
+  const ratingF = parseFloat(document.getElementById('ratingFilter').value);
+  const searchF = document.getElementById('searchBox').value.toLowerCase();
+
+  const filtered = DATA.filter(d => {
+    if (gradeF !== 'all' && gradeNum(d[1]) !== parseInt(gradeF)) return false;
+    if (d[3] < ratingF) return false;
+    if (searchF && !d[0].toLowerCase().includes(searchF) && !d[2].toLowerCase().includes(searchF)) return false;
+    return true;
+  });
+
+  // Group by area
+  const areas = {};
+  const areaOrder = [];
+  filtered.forEach(d => {
+    if (!areas[d[2]]) { areas[d[2]] = []; areaOrder.push(d[2]); }
+    areas[d[2]].push(d);
+  });
+
+  document.getElementById('totalCount').textContent = filtered.length;
+  document.getElementById('areaCount').textContent = areaOrder.length;
+
+  const container = document.getElementById('container');
+  container.innerHTML = '';
+
+  areaOrder.forEach(area => {
+    const problems = areas[area];
+    const avgRating = (problems.reduce((s, p) => s + p[3], 0) / problems.length).toFixed(1);
+
+    const section = document.createElement('div');
+    section.className = 'area-section';
+
+    const header = document.createElement('div');
+    header.className = 'area-header';
+    header.innerHTML = `
+      <span class="area-name">${area}</span>
+      <div class="area-meta">
+        <span class="area-avg">\u2605 ${avgRating}</span>
+        <span class="area-count">${problems.length}</span>
+        <span class="chevron">\u25BC</span>
+      </div>`;
+
+    const body = document.createElement('div');
+    body.className = 'area-body';
+
+    body.innerHTML = '<div class="climb-header"><span>Problem</span><span style="text-align:center">Grade</span><span style="text-align:center">Rating</span><span style="text-align:center">Votes</span></div>';
+
+    problems.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'climb-row';
+      row.innerHTML = `
+        <span class="climb-name"><a href="https://bleau.info/${p[5]}/${p[6]}.html" target="_blank" rel="noopener">${p[0]}</a></span>
+        <span class="climb-grade ${gradeClass(p[1])}">${p[1]}</span>
+        <span class="climb-rating ${ratingClass(p[3])}">${p[3].toFixed(1)}</span>
+        <span class="climb-votes">${p[4]}</span>`;
+      body.appendChild(row);
+    });
+
+    header.addEventListener('click', () => {
+      header.classList.toggle('open');
+      body.classList.toggle('open');
+    });
+
+    section.appendChild(header);
+    section.appendChild(body);
+    container.appendChild(section);
+  });
+}
+
+document.getElementById('gradeFilter').addEventListener('change', render);
+document.getElementById('ratingFilter').addEventListener('change', render);
+document.getElementById('searchBox').addEventListener('input', render);
+
+render();
+
+// Open first area by default
+const first = document.querySelector('.area-header');
+if (first) first.click();
+</script>
+</body>
+</html>
