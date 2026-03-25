@@ -20,17 +20,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .filters select, .filters input { background: #1a1a2e; border: 1px solid #2a2a4a; color: #e0e0e0; padding: 6px 10px; border-radius: 6px; font-size: 14px; }
 .filters input { width: 180px; }
 .container { max-width: 800px; margin: 0 auto; padding: 0 12px 40px; }
-.area-section { margin-bottom: 4px; }
-.area-header { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 10px; padding: 14px 18px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.15s; user-select: none; }
-.area-header:hover { background: #1e1e36; border-color: #3a3a5a; }
-.area-header.open { border-radius: 10px 10px 0 0; border-bottom-color: transparent; background: #1e1e36; }
-.area-name { font-size: 17px; font-weight: 600; color: #fff; }
-.area-meta { display: flex; align-items: center; gap: 12px; }
-.area-count { background: #2a2a4a; color: #64b5f6; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 12px; }
-.area-avg { font-size: 13px; color: #ffd54f; }
+.region-section { margin-bottom: 8px; }
+.region-toggle { background: linear-gradient(135deg, #1a1a2e 0%, #1c2340 100%); border: 1px solid #2a3a5a; border-radius: 12px; padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.15s; user-select: none; }
+.region-toggle:hover { background: linear-gradient(135deg, #1e2040 0%, #22304a 100%); border-color: #3a4a6a; }
+.region-toggle.open { border-radius: 12px 12px 0 0; border-bottom-color: transparent; }
+.region-toggle-name { font-size: 18px; font-weight: 700; color: #64b5f6; }
+.region-toggle-meta { display: flex; align-items: center; gap: 12px; }
+.region-toggle-count { background: rgba(100,181,246,0.15); color: #64b5f6; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 12px; }
+.region-toggle-areas { font-size: 12px; color: #6688aa; }
 .chevron { color: #555; font-size: 18px; transition: transform 0.2s; }
-.area-header.open .chevron { transform: rotate(180deg); }
-.area-body { display: none; border: 1px solid #2a2a4a; border-top: none; border-radius: 0 0 10px 10px; overflow: hidden; }
+.region-toggle.open .chevron { transform: rotate(180deg); }
+.region-body { display: none; border: 1px solid #2a3a5a; border-top: none; border-radius: 0 0 12px 12px; padding: 8px 0; overflow: hidden; background: #12121a; }
+.region-body.open { display: block; }
+.area-section { margin: 4px 8px; }
+.area-header { background: #1a1a2e; border: 1px solid #222240; border-radius: 8px; padding: 10px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.15s; user-select: none; }
+.area-header:hover { background: #1e1e36; border-color: #3a3a5a; }
+.area-header.open { border-radius: 8px 8px 0 0; border-bottom-color: transparent; background: #1e1e36; }
+.area-name { font-size: 15px; font-weight: 600; color: #fff; }
+.area-meta { display: flex; align-items: center; gap: 10px; }
+.area-count { background: #2a2a4a; color: #aaa; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+.area-avg { font-size: 12px; color: #ffd54f; }
+.area-body { display: none; border: 1px solid #222240; border-top: none; border-radius: 0 0 8px 8px; margin: 0 0 0 0; overflow: hidden; }
 .area-body.open { display: block; }
 .climb-row { display: grid; grid-template-columns: 1fr 58px 52px 52px; gap: 0; padding: 10px 18px; border-bottom: 1px solid #1a1a2e; align-items: center; transition: background 0.1s; }
 .climb-row:hover { background: rgba(100,181,246,0.04); }
@@ -46,10 +56,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .climb-header { display: grid; grid-template-columns: 1fr 58px 52px 52px; padding: 8px 18px; background: #12121a; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #555; border-bottom: 1px solid #1a1a2e; }
 .footer { text-align: center; padding: 24px; color: #444; font-size: 12px; }
 .hidden { display: none !important; }
-.region-header { padding: 18px 14px 8px; margin-top: 16px; }
-.region-header:first-child { margin-top: 0; }
-.region-name { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #64b5f6; }
-.region-line { height: 1px; background: linear-gradient(90deg, #64b5f6 0%, transparent 60%); margin-top: 6px; }
 @media (max-width: 500px) {
   .header h1 { font-size: 22px; }
   .climb-row { grid-template-columns: 1fr 50px 44px 44px; padding: 8px 12px; }
@@ -65,7 +71,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <p>Fontainebleau's highest-rated boulders &mdash; 5a to 8a</p>
   <div class="stats">
     <div class="stat"><div class="stat-num" id="totalCount">187</div><div class="stat-label">Problems</div></div>
-    <div class="stat"><div class="stat-num" id="areaCount">23</div><div class="stat-label">Areas</div></div>
+    <div class="stat"><div class="stat-num" id="regionCount">9</div><div class="stat-label">Regions</div></div>
     <div class="stat"><div class="stat-num">3.5+</div><div class="stat-label">Min Rating</div></div>
     <div class="stat"><div class="stat-num">20+</div><div class="stat-label">Min Votes</div></div>
   </div>
@@ -368,21 +374,37 @@ function render() {
     regionAreas[region].push(area);
   });
 
+  const allRegions = [...REGION_ORDER];
+  if (regionAreas['Other']) allRegions.push('Other');
+
   document.getElementById('totalCount').textContent = filtered.length;
-  document.getElementById('areaCount').textContent = areaOrder.length;
+  const activeRegions = allRegions.filter(r => regionAreas[r] && regionAreas[r].length > 0);
+  document.getElementById('regionCount').textContent = activeRegions.length;
 
   const container = document.getElementById('container');
   container.innerHTML = '';
 
-  REGION_ORDER.forEach(region => {
+  allRegions.forEach(region => {
     const regionAreaList = regionAreas[region];
     if (!regionAreaList || regionAreaList.length === 0) return;
 
-    // Region header
-    const rh = document.createElement('div');
-    rh.className = 'region-header';
-    rh.innerHTML = `<div class="region-name">${region}</div><div class="region-line"></div>`;
-    container.appendChild(rh);
+    const regionProblems = regionAreaList.reduce((sum, a) => sum + areas[a].length, 0);
+
+    const regionSection = document.createElement('div');
+    regionSection.className = 'region-section';
+
+    const regionToggle = document.createElement('div');
+    regionToggle.className = 'region-toggle';
+    regionToggle.innerHTML = `
+      <span class="region-toggle-name">${region}</span>
+      <div class="region-toggle-meta">
+        <span class="region-toggle-areas">${regionAreaList.length} area${regionAreaList.length > 1 ? 's' : ''}</span>
+        <span class="region-toggle-count">${regionProblems}</span>
+        <span class="chevron">\u25BC</span>
+      </div>`;
+
+    const regionBody = document.createElement('div');
+    regionBody.className = 'region-body';
 
     regionAreaList.forEach(area => {
       const problems = areas[area];
@@ -424,37 +446,18 @@ function render() {
 
       section.appendChild(header);
       section.appendChild(body);
-      container.appendChild(section);
+      regionBody.appendChild(section);
     });
-  });
 
-  // Handle any areas not in a known region
-  if (regionAreas['Other']) {
-    const rh = document.createElement('div');
-    rh.className = 'region-header';
-    rh.innerHTML = `<div class="region-name">Other</div><div class="region-line"></div>`;
-    container.appendChild(rh);
-    regionAreas['Other'].forEach(area => {
-      const problems = areas[area];
-      const avgRating = (problems.reduce((s, p) => s + p[3], 0) / problems.length).toFixed(1);
-      const section = document.createElement('div');
-      section.className = 'area-section';
-      const header = document.createElement('div');
-      header.className = 'area-header';
-      header.innerHTML = `<span class="area-name">${area}</span><div class="area-meta"><span class="area-avg">\u2605 ${avgRating}</span><span class="area-count">${problems.length}</span><span class="chevron">\u25BC</span></div>`;
-      const body = document.createElement('div');
-      body.className = 'area-body';
-      body.innerHTML = '<div class="climb-header"><span>Problem</span><span style="text-align:center">Grade</span><span style="text-align:center">Rating</span><span style="text-align:center">Votes</span></div>';
-      problems.forEach(p => {
-        const row = document.createElement('div');
-        row.className = 'climb-row';
-        row.innerHTML = `<span class="climb-name"><a href="https://bleau.info/${p[5]}/${p[6]}.html" target="_blank" rel="noopener">${p[0]}</a></span><span class="climb-grade ${gradeClass(p[1])}">${p[1]}</span><span class="climb-rating ${ratingClass(p[3])}">${p[3].toFixed(1)}</span><span class="climb-votes">${p[4]}</span>`;
-        body.appendChild(row);
-      });
-      header.addEventListener('click', () => { header.classList.toggle('open'); body.classList.toggle('open'); });
-      section.appendChild(header); section.appendChild(body); container.appendChild(section);
+    regionToggle.addEventListener('click', () => {
+      regionToggle.classList.toggle('open');
+      regionBody.classList.toggle('open');
     });
-  }
+
+    regionSection.appendChild(regionToggle);
+    regionSection.appendChild(regionBody);
+    container.appendChild(regionSection);
+  });
 }
 
 document.getElementById('gradeFilter').addEventListener('change', render);
@@ -464,9 +467,9 @@ document.getElementById('sortBy').addEventListener('change', render);
 
 render();
 
-// Open first area by default
-const first = document.querySelector('.area-header');
-if (first) first.click();
+// Open first region by default
+const firstRegion = document.querySelector('.region-toggle');
+if (firstRegion) firstRegion.click();
 </script>
 </body>
 </html>
