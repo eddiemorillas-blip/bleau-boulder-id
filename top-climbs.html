@@ -73,9 +73,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .leaflet-popup-content { color: #222; font-size: 13px; line-height: 1.4; }
 .leaflet-popup-content strong { font-size: 14px; }
 .leaflet-popup-content a { color: #1a73e8; }
-.open-gmaps-btn { position: absolute; bottom: 24px; right: 12px; z-index: 1000; background: #fff; color: #333; border: none; border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 6px; transition: background 0.15s; }
-.open-gmaps-btn:hover { background: #f0f0f0; }
-.open-gmaps-btn img { width: 20px; height: 20px; }
 .map-legend { position: absolute; bottom: 24px; left: 12px; z-index: 1000; background: rgba(255,255,255,0.95); border-radius: 8px; padding: 8px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); font-size: 12px; color: #333; display: flex; gap: 10px; align-items: center; }
 .map-legend-item { display: flex; align-items: center; gap: 4px; }
 .map-legend-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.2); }
@@ -138,10 +135,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <div class="container" id="container"></div>
 <div id="mapWrapper" style="display:none;position:relative;">
   <div id="mapView" style="display:block;width:100%;height:calc(100vh - 260px);min-height:500px;"></div>
-  <button class="open-gmaps-btn" onclick="openInGoogleMaps()" title="Open current view in Google Maps app">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#ea4335"/></svg>
-    Open in Google Maps
-  </button>
   <div class="map-legend">
     <span style="font-weight:600;">Grade:</span>
     <span class="map-legend-item"><span class="map-legend-dot" style="background:#81c784;"></span>5</span>
