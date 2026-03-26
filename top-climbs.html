@@ -1830,6 +1830,9 @@ function render() {
   const activeRegions = allRegions.filter(r => regionAreas[r] && regionAreas[r].length > 0);
   document.getElementById('regionCount').textContent = activeRegions.length;
 
+  const searchF = document.getElementById('searchBox').value.trim();
+  const autoExpand = searchF.length > 0;
+
   const container = document.getElementById('container');
   container.innerHTML = '';
 
@@ -1896,6 +1899,11 @@ function render() {
         body.classList.toggle('open');
       });
 
+      if (autoExpand) {
+        header.classList.add('open');
+        body.classList.add('open');
+      }
+
       section.appendChild(header);
       section.appendChild(body);
       regionBody.appendChild(section);
@@ -1905,6 +1913,11 @@ function render() {
       regionToggle.classList.toggle('open');
       regionBody.classList.toggle('open');
     });
+
+    if (autoExpand) {
+      regionToggle.classList.add('open');
+      regionBody.classList.add('open');
+    }
 
     regionSection.appendChild(regionToggle);
     regionSection.appendChild(regionBody);
@@ -1918,9 +1931,6 @@ document.getElementById('searchBox').addEventListener('input', () => { currentVi
 document.getElementById('sortBy').addEventListener('change', () => { currentView === 'map' ? updateMap() : render(); });
 
 render();
-
-const firstRegion = document.querySelector('.region-toggle');
-if (firstRegion) firstRegion.click();
 </script>
 </body>
 </html>
