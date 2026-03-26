@@ -1671,7 +1671,7 @@ function switchView(view) {
   document.getElementById('tabList').classList.toggle('active', view === 'list');
   document.getElementById('tabMap').classList.toggle('active', view === 'map');
   document.getElementById('container').style.display = view === 'list' ? '' : 'none';
-  document.getElementById('mapView').style.display = view === 'map' ? 'block' : 'none';
+  document.getElementById('mapWrapper').style.display = view === 'map' ? 'block' : 'none';
   if (view === 'map') {
     if (!map) initMap();
     else { map.invalidateSize(); updateMap(); }
