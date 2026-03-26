@@ -89,8 +89,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div class="stat"><div class="stat-num">10+</div><div class="stat-label">Min Votes</div></div>
   </div>
   <div class="view-tabs">
-    <div class="view-tab active" id="tabList" onclick="switchView('list')">\ud83d\udccb List</div>
-    <div class="view-tab" id="tabMap" onclick="switchView('map')">\ud83d\uddfa Map</div>
+    <div class="view-tab active" id="tabList" onclick="switchView('list')">List</div>
+    <div class="view-tab" id="tabMap" onclick="switchView('map')">Map</div>
   </div>
 </div>
 
@@ -1411,13 +1411,86 @@ function initMap() {
     attributionControl: true
   }).setView([48.41, 2.60], 12);
   
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap'
+  L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['mt0','mt1','mt2','mt3'],
+    attribution: '&copy; Google Maps'
   }).addTo(map);
-  
+
   markers = L.layerGroup().addTo(map);
+
+  // Add locate button
+  const locBtn = L.control({position: 'topleft'});
+  locBtn.onAdd = function() {
+    const div = L.DomUtil.create('div', 'leaflet-bar');
+    div.innerHTML = '<a href="#" id="locateBtn" title="Show my location" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;font-size:18px;background:#fff;text-decoration:none;color:#333;">&#9737;</a>';
+    div.querySelector('a').addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      locateUser();
+    });
+    L.DomEvent.disableClickPropagation(div);
+    return div;
+  };
+  locBtn.addTo(map);
+
   updateMap();
+}
+
+let userMarker = null;
+let userCircle = null;
+
+function locateUser() {
+  const btn = document.getElementById('locateBtn');
+  if (!btn) return;
+  btn.style.color = '#64b5f6';
+  btn.textContent = '...';
+
+  if (!navigator.geolocation) {
+    btn.textContent = '\u2299';
+    btn.style.color = '#c00';
+    setTimeout(() => { btn.style.color = '#333'; }, 2000);
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const acc = pos.coords.accuracy;
+
+      if (userMarker) { map.removeLayer(userMarker); }
+      if (userCircle) { map.removeLayer(userCircle); }
+
+      userMarker = L.circleMarker([lat, lng], {
+        radius: 8,
+        fillColor: '#4285f4',
+        color: '#fff',
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 1
+      }).addTo(map).bindPopup('You are here');
+
+      userCircle = L.circle([lat, lng], {
+        radius: acc,
+        fillColor: '#4285f4',
+        color: '#4285f4',
+        weight: 1,
+        opacity: 0.2,
+        fillOpacity: 0.1
+      }).addTo(map);
+
+      map.setView([lat, lng], 15);
+      btn.innerHTML = '&#9737;';
+      btn.style.color = '#4285f4';
+    },
+    function(err) {
+      btn.innerHTML = '&#9737;';
+      btn.style.color = '#c00';
+      setTimeout(() => { btn.style.color = '#333'; }, 2000);
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
 }
 
 function updateMap() {
