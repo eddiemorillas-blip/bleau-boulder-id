@@ -20,10 +20,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .view-tab { background: rgba(255,255,255,0.08); border: 1px solid #2a2a4a; color: #8888aa; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
 .view-tab:hover { background: rgba(100,181,246,0.15); color: #64b5f6; }
 .view-tab.active { background: rgba(100,181,246,0.2); border-color: #64b5f6; color: #64b5f6; }
-.filters { padding: 16px 20px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; max-width: 800px; margin: 0 auto; }
-.filters label { font-size: 12px; color: #8888aa; text-transform: uppercase; letter-spacing: 1px; margin-right: 4px; }
-.filters select, .filters input { background: #1a1a2e; border: 1px solid #2a2a4a; color: #e0e0e0; padding: 6px 10px; border-radius: 6px; font-size: 14px; }
-.filters input { width: 180px; }
+.filters { padding: 16px 20px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; max-width: 800px; margin: 0 auto; }
+.filters label { font-size: 12px; color: #8888aa; text-transform: uppercase; letter-spacing: 1px; margin-right: 2px; }
+.filters select, .filters input[type="text"] { background: #1a1a2e; border: 1px solid #2a2a4a; color: #e0e0e0; padding: 6px 10px; border-radius: 6px; font-size: 14px; }
+.filters input[type="text"] { width: 180px; }
+.slider-group { display: flex; align-items: center; gap: 6px; }
+.slider-group input[type="range"] { -webkit-appearance: none; appearance: none; width: 100px; height: 6px; background: #2a2a4a; border-radius: 3px; outline: none; cursor: pointer; }
+.slider-group input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; background: #64b5f6; border-radius: 50%; cursor: pointer; border: 2px solid #1a1a2e; }
+.slider-group input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; background: #64b5f6; border-radius: 50%; cursor: pointer; border: 2px solid #1a1a2e; }
+.slider-val { font-size: 13px; font-weight: 600; color: #64b5f6; min-width: 32px; text-align: center; }
 .container { max-width: 800px; margin: 0 auto; padding: 0 12px 40px; }
 #mapView { display: none; width: 100%; height: calc(100vh - 260px); min-height: 500px; }
 .region-section { margin-bottom: 8px; }
@@ -91,8 +96,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <div class="stats">
     <div class="stat"><div class="stat-num" id="totalCount">1376</div><div class="stat-label">Problems</div></div>
     <div class="stat"><div class="stat-num" id="regionCount">13</div><div class="stat-label">Regions</div></div>
-    <div class="stat"><div class="stat-num">3.5+</div><div class="stat-label">Min Rating</div></div>
-    <div class="stat"><div class="stat-num">10+</div><div class="stat-label">Min Votes</div></div>
+    <div class="stat"><div class="stat-num" id="areaCount">88</div><div class="stat-label">Areas</div></div>
   </div>
   <div class="view-tabs">
     <div class="view-tab active" id="tabList" onclick="switchView('list')">List</div>
@@ -107,16 +111,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <option value="5">5a–5c+</option>
     <option value="6">6a–6c+</option>
     <option value="7">7a–7c+</option>
-    <option value="8">8a-8b</option>
+    <option value="8">8a–8b</option>
   </select>
-  <label style="margin-left:8px">Min Rating</label>
-  <select id="ratingFilter">
-    <option value="3.5">3.5+</option>
-    <option value="4.0">4.0+</option>
-    <option value="4.5">4.5+</option>
-  </select>
+  <label>Rating</label>
+  <div class="slider-group">
+    <input type="range" id="ratingFilter" min="3.5" max="5.0" step="0.1" value="3.5">
+    <span class="slider-val" id="ratingVal">3.5+</span>
+  </div>
+  <label>Votes</label>
+  <div class="slider-group">
+    <input type="range" id="votesFilter" min="10" max="200" step="10" value="10">
+    <span class="slider-val" id="votesVal">10+</span>
+  </div>
   <input type="text" id="searchBox" placeholder="Search name or area...">
-  <label style="margin-left:8px">Sort</label>
+  <label>Sort</label>
   <select id="sortBy">
     <option value="rating">By Rating</option>
     <option value="grade">By Grade</option>
@@ -1643,10 +1651,12 @@ function gradeSort(a, b) {
 function getFiltered() {
   const gradeF = document.getElementById('gradeFilter').value;
   const ratingF = parseFloat(document.getElementById('ratingFilter').value);
+  const votesF = parseInt(document.getElementById('votesFilter').value);
   const searchF = document.getElementById('searchBox').value.toLowerCase();
   return DATA.filter(d => {
     if (gradeF !== 'all' && gradeNum(d[1]) !== parseInt(gradeF)) return false;
     if (d[3] < ratingF) return false;
+    if (d[4] < votesF) return false;
     if (searchF && !d[0].toLowerCase().includes(searchF) && !d[2].toLowerCase().includes(searchF)) return false;
     return true;
   });
@@ -1829,6 +1839,7 @@ function render() {
   document.getElementById('totalCount').textContent = filtered.length;
   const activeRegions = allRegions.filter(r => regionAreas[r] && regionAreas[r].length > 0);
   document.getElementById('regionCount').textContent = activeRegions.length;
+  document.getElementById('areaCount').textContent = areaOrder.length;
 
   const searchF = document.getElementById('searchBox').value.trim();
   const autoExpand = searchF.length > 0;
@@ -1925,10 +1936,23 @@ function render() {
   });
 }
 
-document.getElementById('gradeFilter').addEventListener('change', () => { currentView === 'map' ? updateMap() : render(); });
-document.getElementById('ratingFilter').addEventListener('change', () => { currentView === 'map' ? updateMap() : render(); });
-document.getElementById('searchBox').addEventListener('input', () => { currentView === 'map' ? updateMap() : render(); });
-document.getElementById('sortBy').addEventListener('change', () => { currentView === 'map' ? updateMap() : render(); });
+function onFilter() { currentView === 'map' ? updateMap() : render(); }
+
+document.getElementById('gradeFilter').addEventListener('change', onFilter);
+document.getElementById('searchBox').addEventListener('input', onFilter);
+document.getElementById('sortBy').addEventListener('change', onFilter);
+
+document.getElementById('ratingFilter').addEventListener('input', () => {
+  const v = parseFloat(document.getElementById('ratingFilter').value);
+  document.getElementById('ratingVal').textContent = v.toFixed(1) + '+';
+  onFilter();
+});
+
+document.getElementById('votesFilter').addEventListener('input', () => {
+  const v = parseInt(document.getElementById('votesFilter').value);
+  document.getElementById('votesVal').textContent = v + '+';
+  onFilter();
+});
 
 render();
 </script>
