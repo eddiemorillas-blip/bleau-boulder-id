@@ -49,6 +49,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .area-header.open { border-radius: 8px 8px 0 0; border-bottom-color: transparent; background: #1e1e36; }
 .area-name { font-size: 15px; font-weight: 600; color: #fff; }
 .area-meta { display: flex; align-items: center; gap: 10px; }
+.dl-gpx { background: none; border: 1px solid #333; color: #666; font-size: 11px; padding: 2px 8px; border-radius: 4px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.dl-gpx:hover { border-color: #64b5f6; color: #64b5f6; }
 .area-count { background: #2a2a4a; color: #aaa; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
 .area-avg { font-size: 12px; color: #ffd54f; }
 .area-body { display: none; border: 1px solid #222240; border-top: none; border-radius: 0 0 8px 8px; margin: 0; overflow: hidden; }
@@ -1645,6 +1647,33 @@ function gradeSort(a, b) {
   return (order[la]||0) - (order[lb]||0);
 }
 
+function downloadGPX(areaName, problems) {
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  let wpts = '';
+  problems.forEach(p => {
+    const gps = GPS[p[6]];
+    if (!gps) return;
+    wpts += `  <wpt lat="${gps[0]}" lon="${gps[1]}">\n`;
+    wpts += `    <name>${esc(p[0])}</name>\n`;
+    wpts += `    <desc>Grade: ${esc(p[1])} | Rating: ${p[3].toFixed(1)} | Votes: ${p[4]} | Area: ${esc(p[2])}</desc>\n`;
+    wpts += `    <type>Boulder</type>\n`;
+    wpts += `    <link href="https://bleau.info/${p[5]}/${p[6]}.html"><text>bleau.info</text></link>\n`;
+    wpts += `  </wpt>\n`;
+  });
+
+  const gpx = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Font Top Climbs" xmlns="http://www.topografix.com/GPX/1/1">\n  <metadata>\n    <name>${esc(areaName)} - Top Climbs</name>\n    <desc>${problems.length} top-rated boulders in ${esc(areaName)}, Fontainebleau</desc>\n  </metadata>\n${wpts}</gpx>`;
+
+  const blob = new Blob([gpx], {type: 'application/gpx+xml'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = areaName.replace(/[^a-zA-Z0-9À-ÿ ]/g, '').replace(/\s+/g, '_') + '.gpx';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function getFiltered() {
   const gradeF = document.getElementById('gradeFilter').value;
   const ratingF = parseFloat(document.getElementById('ratingFilter').value);
@@ -1880,8 +1909,14 @@ function render() {
         <div class="area-meta">
           <span class="area-avg">\u2605 ${avgRating}</span>
           <span class="area-count">${problems.length}</span>
+          <button class="dl-gpx" title="Download GPX for offline use">GPX</button>
           <span class="chevron">\u25bc</span>
         </div>`;
+
+      header.querySelector('.dl-gpx').addEventListener('click', (e) => {
+        e.stopPropagation();
+        downloadGPX(area, problems);
+      });
 
       const body = document.createElement('div');
       body.className = 'area-body';
